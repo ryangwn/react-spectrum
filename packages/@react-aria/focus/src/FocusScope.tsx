@@ -386,6 +386,22 @@ function useAutoFocus(scopeRef: RefObject<HTMLElement[]>, autoFocus: boolean) {
   }, []);
 }
 
+// An array to create a stack of nodeToRestore elements.
+let nodeToRestoreArray: HTMLElement[] = [];
+
+function addToNodeToRestoreArray(node: HTMLElement) {
+  if (nodeToRestoreArray.indexOf(node) === -1) {
+    nodeToRestoreArray.push(node);
+  }
+}
+
+function removeFromNodeToRestoreArray(node: HTMLElement) {
+  let index = nodeToRestoreArray.indexOf(node);
+  if (index > -1) {
+    nodeToRestoreArray.splice(index, 1);
+  }
+}
+
 function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boolean, contain: boolean) {
   // useLayoutEffect instead of useEffect so the active element is saved synchronously instead of asynchronously.
   useLayoutEffect(() => {
@@ -395,6 +411,7 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
 
     let scope = scopeRef.current;
     let nodeToRestore = document.activeElement as HTMLElement;
+    addToNodeToRestoreArray(nodeToRestore);
 
     // Handle the Tab key so that tabbing out of the scope goes to the next element
     // after the node that had focus when the scope mounted. This is important when
@@ -418,6 +435,7 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
       let nextElement = (e.shiftKey ? walker.previousNode() : walker.nextNode()) as HTMLElement;
 
       if (!document.body.contains(nodeToRestore) || nodeToRestore === document.body) {
+        removeFromNodeToRestoreArray(nodeToRestore);
         nodeToRestore = null;
       }
 
@@ -457,12 +475,29 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
         document.removeEventListener('keydown', onKeyDown, true);
       }
 
-      if (restoreFocus && nodeToRestore && isElementInScope(document.activeElement, scope)) {
-        requestAnimationFrame(() => {
-          if (document.body.contains(nodeToRestore)) {
-            focusElement(nodeToRestore);
-          }
-        });
+      if (nodeToRestore) {
+        let index = nodeToRestoreArray.indexOf(nodeToRestore);
+
+        if (restoreFocus && isElementInScope(document.activeElement, scope)) {
+          requestAnimationFrame(() => {
+            if (document.body.contains(nodeToRestore) && nodeToRestore !== document.body) {
+              focusElement(nodeToRestore);
+            } else {
+              while (index > 0) {
+                index--;
+                let node = nodeToRestoreArray[index];
+                if (!document.body.contains(node) || node === document.body) {
+                  removeFromNodeToRestoreArray(node);
+                } else {
+                  focusElement(node);
+                  break;
+                }
+              }
+            }
+          });
+        } else if (!document.body.contains(nodeToRestore)) {
+          removeFromNodeToRestoreArray(nodeToRestore);
+        }
       }
     };
   }, [scopeRef, restoreFocus, contain]);

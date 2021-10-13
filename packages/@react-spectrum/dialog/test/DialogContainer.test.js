@@ -43,6 +43,7 @@ describe('DialogContainer', function () {
     );
 
     let button = getByRole('button');
+    act(() => button.focus());
     expect(queryByRole('dialog')).toBeNull();
 
     triggerPress(button);
@@ -51,12 +52,11 @@ describe('DialogContainer', function () {
     let dialog = getByRole('dialog');
     expect(document.activeElement).toBe(dialog);
 
-    button = within(dialog).getByText('Confirm');
-
-    triggerPress(button);
+    triggerPress(within(dialog).getByText('Confirm'));
     act(() => {jest.runAllTimers();});
 
     expect(queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(button);
   });
 
   it('should support closing a dialog via the Escape key', function () {
@@ -67,6 +67,7 @@ describe('DialogContainer', function () {
     );
 
     let button = getByRole('button');
+    act(() => button.focus());
     expect(queryByRole('dialog')).toBeNull();
 
     triggerPress(button);
@@ -80,6 +81,7 @@ describe('DialogContainer', function () {
     act(() => {jest.runAllTimers();});
 
     expect(queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(button);
   });
 
   it('should not close a dialog via the Escape key if isKeyboardDismissDisabled', function () {
@@ -134,6 +136,7 @@ describe('DialogContainer', function () {
     );
 
     let button = getByRole('button');
+    act(() => button.focus());
     expect(queryByRole('dialog')).toBeNull();
 
     triggerPress(button);
@@ -145,6 +148,7 @@ describe('DialogContainer', function () {
     act(() => {jest.runAllTimers();});
 
     expect(queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(button);
   });
 
   it('should not close the dialog when a trigger unmounts', function () {
@@ -155,6 +159,7 @@ describe('DialogContainer', function () {
     );
 
     let button = getByRole('button');
+    act(() => button.focus());
     expect(queryByRole('dialog')).toBeNull();
 
     triggerPress(button);
@@ -178,5 +183,6 @@ describe('DialogContainer', function () {
     act(() => {jest.runAllTimers();});
 
     expect(queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(getByRole('button'));
   });
 });
