@@ -72,7 +72,9 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
     onKeyDown(e) {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClearSelection();
+        if (domRef.current.contains(e.target as Node)) {
+          onClearSelection();
+        }
       }
     }
   });
