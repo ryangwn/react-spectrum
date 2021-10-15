@@ -73,14 +73,12 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
     onKeyDown(e) {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (domRef.current.contains(e.target as Node)) {
-          // Hack to ensure that focus restores last element that had focus
-          // rather than getting lost to document.body. 
-          if (clearButtonRef.current) {
-            clearButtonRef.current.focus();
-          }
-          onClearSelection();
+        // Hack to ensure that focus restores last element that had focus
+        // rather than getting lost to document.body. 
+        if (clearButtonRef.current) {
+          clearButtonRef.current.focus();
         }
+        onClearSelection();
       }
     }
   });
