@@ -290,52 +290,56 @@ function ActionGroupItem<T>({item, state, isDisabled, isEmphasized, staticColor,
   }, [hideButtonText, item.rendered, textId]);
 
   let button = (
-    <TooltipTrigger placement={orientation === 'vertical' ? 'end' : 'top'}>
-      {/*
-        Use a PressResponder to send DOM props through.
-        ActionButton doesn't allow overriding the role by default.
-      */}
-      <PressResponder {...mergeProps(buttonProps, hoverProps)}>
-        <ClearSlots>
-          <SlotProvider
-            slots={{
-              text: {
-                id: hideButtonText ? textId : null,
-                isHidden: hideButtonText
-              }
-            }}>
-            <ActionButton
-              ref={ref}
-              UNSAFE_className={
+    // Use a PressResponder to send DOM props through.
+    // ActionButton doesn't allow overriding the role by default.
+    <PressResponder {...mergeProps(buttonProps, hoverProps)}>
+      <ClearSlots>
+        <SlotProvider
+          slots={{
+            text: {
+              id: hideButtonText ? textId : null,
+              isHidden: hideButtonText
+            }
+          }}>
+          <ActionButton
+            ref={ref}
+            UNSAFE_className={
+              classNames(
+                styles,
+                'spectrum-ActionGroup-item',
+                {
+                  'is-selected': isSelected,
+                  'is-hovered': isHovered,
+                  'spectrum-ActionGroup-item--iconOnly': hideButtonText
+                },
                 classNames(
-                  styles,
-                  'spectrum-ActionGroup-item',
+                  buttonStyles,
                   {
-                    'is-selected': isSelected,
-                    'is-hovered': isHovered,
-                    'spectrum-ActionGroup-item--iconOnly': hideButtonText
-                  },
-                  classNames(
-                    buttonStyles,
-                    {
-                      'spectrum-ActionButton--emphasized': isEmphasized,
-                      'is-selected': isSelected
-                    }
-                  )
+                    'spectrum-ActionButton--emphasized': isEmphasized,
+                    'is-selected': isSelected
+                  }
                 )
-              }
-              isDisabled={isDisabled}
-              staticColor={staticColor}
-              aria-label={item['aria-label']}
-              aria-labelledby={item['aria-label'] == null && hideButtonText ? textId : undefined}>
-              {item.rendered}
-            </ActionButton>
-          </SlotProvider>
-        </ClearSlots>
-      </PressResponder>
-      {hideButtonText && textContent && <Tooltip>{textContent}</Tooltip>}
-    </TooltipTrigger>
+              )
+            }
+            isDisabled={isDisabled}
+            staticColor={staticColor}
+            aria-label={item['aria-label']}
+            aria-labelledby={item['aria-label'] == null && hideButtonText ? textId : undefined}>
+            {item.rendered}
+          </ActionButton>
+        </SlotProvider>
+      </ClearSlots>
+    </PressResponder>
   );
+
+  if (hideButtonText && textContent) {
+    button = (
+      <TooltipTrigger placement={orientation === 'vertical' ? 'end' : 'top'}>
+        {button}
+        <Tooltip>{textContent}</Tooltip>
+      </TooltipTrigger>
+    );
+  }
 
   if (item.wrapper) {
     button = item.wrapper(button);

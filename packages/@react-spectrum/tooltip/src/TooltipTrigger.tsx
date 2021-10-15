@@ -57,21 +57,19 @@ function TooltipTrigger(props: SpectrumTooltipTriggerProps) {
       {...triggerProps}
       ref={tooltipTriggerRef}>
       {trigger}
-      {
-        tooltip && <TooltipContext.Provider
-          value={{
-            state,
-            placement,
-            ref: overlayRef,
-            UNSAFE_style: overlayProps.style,
-            arrowProps,
-            ...tooltipProps
-          }}>
-          <Overlay isOpen={state.isOpen}>
-            {tooltip}
-          </Overlay>
-        </TooltipContext.Provider>
-      }
+      <TooltipContext.Provider
+        value={{
+          state,
+          placement,
+          ref: overlayRef,
+          UNSAFE_style: overlayProps.style,
+          arrowProps,
+          ...tooltipProps
+        }}>
+        <Overlay isOpen={state.isOpen}>
+          {tooltip}
+        </Overlay>
+      </TooltipContext.Provider>
     </FocusableProvider>
   );
 }

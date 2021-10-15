@@ -68,10 +68,16 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
     lastCount.current = selectedItemCount;
   }
 
+  let clearButtonRef = useRef(null);
   let {keyboardProps} = useKeyboard({
     onKeyDown(e) {
       if (e.key === 'Escape') {
         e.preventDefault();
+        // Hack to ensure that focus restores last element that had focus
+        // rather than getting lost to document.body. 
+        if (clearButtonRef.current) {
+          clearButtonRef.current.focus();
+        }
         onClearSelection();
       }
     }
@@ -109,6 +115,7 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
             {children}
           </ActionGroup>
           <ActionButton
+            ref={clearButtonRef}
             gridArea="clear"
             aria-label={formatMessage('clearSelection')}
             onPress={() => onClearSelection()}
