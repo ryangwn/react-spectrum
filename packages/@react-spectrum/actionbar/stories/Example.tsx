@@ -81,7 +81,7 @@ export function Example(props: any = {}) {
           let tableViewDOMNode = tableViewRef.current.UNSAFE_getDOMNode();
           requestAnimationFrame(() => {
             if (!tableViewDOMNode.contains(document.activeElement)) {
-              tableViewRef.current.UNSAFE_getDOMNode().focus();
+              tableViewDOMNode.focus();
             }
           });
         }}
