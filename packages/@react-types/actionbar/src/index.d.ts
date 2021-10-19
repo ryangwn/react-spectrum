@@ -10,14 +10,15 @@
  * governing permissions and limitations under the License.
  */
 
-import {CollectionBase, DOMProps, StyleProps} from '@react-types/shared';
-import {Key, ReactNode} from 'react';
+import {CollectionBase, DOMProps, DOMRefValue, StyleProps} from '@react-types/shared';
+import {Key, ReactNode, RefObject} from 'react';
 
 export interface ActionBarProps<T> extends CollectionBase<T> {
   // Required. When zero, the ActionBar is hidden.
   selectedItemCount: number | 'all',
   // Also required. When clicked, the selection should be cleared.
   onClearSelection: () => void,
+  restoreFocusRef: RefObject<DOMRefValue<HTMLElement>>,
   isEmphasized?: boolean,
   onAction?: (key: Key) => void
 }

@@ -13,7 +13,7 @@
 import {ActionButton} from '@react-spectrum/button';
 import {ActionGroup} from '@react-spectrum/actiongroup';
 import {announce} from '@react-aria/live-announcer';
-import {classNames, useDOMRef, useStyleProps} from '@react-spectrum/utils';
+import {classNames, unwrapDOMRef, useDOMRef, useStyleProps} from '@react-spectrum/utils';
 import CrossLarge from '@spectrum-icons/ui/CrossLarge';
 import {DOMRef} from '@react-types/shared';
 import {filterDOMProps} from '@react-aria/utils';
@@ -31,10 +31,27 @@ import {useProviderProps} from '@react-spectrum/provider';
 
 function ActionBar<T extends object>(props: SpectrumActionBarProps<T>, ref: DOMRef<HTMLDivElement>) {
   let isOpen = props.selectedItemCount !== 0;
+  let lastActiveElementRef = useRef(null);
+  let {restoreFocusRef} = props;
 
   return (
     <OpenTransition
       in={isOpen}
+      onEnter={() => {
+        lastActiveElementRef.current = document.activeElement as HTMLElement;
+      }}
+      onExit={() => {
+        if (restoreFocusRef && restoreFocusRef.current) {
+          let domRef = unwrapDOMRef(restoreFocusRef);
+          if (document.body.contains(domRef.current)) {
+            domRef.current.focus();
+            return;
+          }
+        }
+        if (document.body.contains(lastActiveElementRef.current)) {
+          lastActiveElementRef.current.focus();
+        }
+      }}
       mountOnEnter
       unmountOnExit>
       <ActionBarInner {...props} ref={ref} />

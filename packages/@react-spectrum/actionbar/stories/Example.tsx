@@ -72,19 +72,8 @@ export function Example(props: any = {}) {
       </TableView>
       <ActionBar
         selectedItemCount={selectedKeys === 'all' ? selectedKeys : selectedKeys.size}
-        onClearSelection={() => {
-          setSelectedKeys(new Set());
-
-          // To restore focus to a focusedKey that has scrolled out of view
-          // within a TableView with virtual scrolling,
-          // we need to focus the TableView DOM node explicitly.
-          let tableViewDOMNode = tableViewRef.current.UNSAFE_getDOMNode();
-          requestAnimationFrame(() => {
-            if (!tableViewDOMNode.contains(document.activeElement)) {
-              tableViewDOMNode.focus();
-            }
-          });
-        }}
+        onClearSelection={() => setSelectedKeys(new Set())}
+        restoreFocusRef={tableViewRef}
         {...props}>
         <Item key="edit">
           <Edit />
