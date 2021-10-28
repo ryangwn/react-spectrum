@@ -15,13 +15,13 @@ import {ActionGroup} from '@react-spectrum/actiongroup';
 import {announce} from '@react-aria/live-announcer';
 import {classNames, unwrapDOMRef, useDOMRef, useStyleProps} from '@react-spectrum/utils';
 import CrossLarge from '@spectrum-icons/ui/CrossLarge';
-import {DOMRef} from '@react-types/shared';
+import {DOMRef, DOMRefValue} from '@react-types/shared';
 import {filterDOMProps} from '@react-aria/utils';
 import {FocusScope} from '@react-aria/focus';
 // @ts-ignore
 import intlMessages from '../intl/*.json';
 import {OpenTransition} from '@react-spectrum/overlays';
-import React, {ReactElement, useEffect, useRef} from 'react';
+import React, {ReactElement, RefObject, useEffect, useRef} from 'react';
 import {SpectrumActionBarProps} from '@react-types/actionbar';
 import styles from './actionbar.css';
 import {Text} from '@react-spectrum/text';
@@ -31,24 +31,35 @@ import {useProviderProps} from '@react-spectrum/provider';
 
 function ActionBar<T extends object>(props: SpectrumActionBarProps<T>, ref: DOMRef<HTMLDivElement>) {
   let isOpen = props.selectedItemCount !== 0;
-  let lastActiveElementRef = useRef(null);
+  let lastActiveElementRef = useRef<HTMLElement>(null);
   let {restoreFocusRef} = props;
 
   return (
     <OpenTransition
       in={isOpen}
-      onEnter={() => {
-        lastActiveElementRef.current = document.activeElement as HTMLElement;
-      }}
+      onEnter={() => lastActiveElementRef.current = document.activeElement as HTMLElement}
       onExit={() => {
+        // prioritize explicit restoreFocusRef to restore focus
         if (restoreFocusRef && restoreFocusRef.current) {
-          let domRef = unwrapDOMRef(restoreFocusRef);
-          if (document.body.contains(domRef.current)) {
-            domRef.current.focus();
+          let domNode:HTMLElement;
+
+          // For React reference, try unwrapDOMRef to access the DOM node.
+          try {
+            domNode = unwrapDOMRef(restoreFocusRef as RefObject<DOMRefValue<HTMLElement>>).current;
+          } catch (error) {
+            // Otherwise, if we have an HTMLElement ref, use it as the DOM node.
+            if (restoreFocusRef.current instanceof HTMLElement) {
+              domNode = restoreFocusRef.current;
+            } 
+          }
+          if (document.body.contains(domNode) && typeof domNode.focus === 'function') {
+            domNode.focus();
             return;
           }
         }
-        if (document.body.contains(lastActiveElementRef.current)) {
+
+        // Otherwise, try to restore focus to the lastActiveElementRef set onEnter. 
+        if (document.body.contains(lastActiveElementRef.current) && typeof lastActiveElementRef.current.focus === 'function') {
           lastActiveElementRef.current.focus();
         }
       }}

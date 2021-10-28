@@ -18,7 +18,7 @@ export interface ActionBarProps<T> extends CollectionBase<T> {
   selectedItemCount: number | 'all',
   // Also required. When clicked, the selection should be cleared.
   onClearSelection: () => void,
-  restoreFocusRef: RefObject<DOMRefValue<HTMLElement>>,
+  restoreFocusRef: RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>,
   isEmphasized?: boolean,
   onAction?: (key: Key) => void
 }
