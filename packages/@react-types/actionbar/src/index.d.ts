@@ -20,7 +20,14 @@ export interface ActionBarProps<T> extends CollectionBase<T> {
   onClearSelection: () => void,
   restoreFocusRef: RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>,
   isEmphasized?: boolean,
-  onAction?: (key: Key) => void
+  onAction?: (key: Key) => void,
+  /**
+   * Whether to restore focus back to the element that was focused
+   * when the focus scope mounted, after the focus scope unmounts.
+   * 
+   * Accepts a boolean or a ref for the component or element to which focus should be restored.
+   */
+  restoreFocus?: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>
 }
 
 export interface SpectrumActionBarProps<T> extends ActionBarProps<T>, DOMProps, StyleProps {}

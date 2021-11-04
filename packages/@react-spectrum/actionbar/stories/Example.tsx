@@ -72,8 +72,10 @@ export function Example(props: any = {}) {
       </TableView>
       <ActionBar
         selectedItemCount={selectedKeys === 'all' ? selectedKeys : selectedKeys.size}
-        onClearSelection={() => setSelectedKeys(new Set())}
-        restoreFocusRef={tableViewRef}
+        restoreFocus={tableViewRef}
+        onClearSelection={() => {
+          setSelectedKeys(new Set());
+        }}
         {...props}>
         <Item key="edit">
           <Edit />
