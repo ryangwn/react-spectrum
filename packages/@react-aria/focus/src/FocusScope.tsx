@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+import {DOMRefValue} from '@react-types/shared';
 import {focusSafely} from './focusSafely';
 import {isElementVisible} from './isElementVisible';
 import React, {ReactNode, RefObject, useContext, useEffect, useRef} from 'react';
@@ -32,7 +33,7 @@ interface FocusScopeProps {
    * Whether to restore focus back to the element that was focused
    * when the focus scope mounted, after the focus scope unmounts.
    */
-  restoreFocus?: boolean,
+  restoreFocus?: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>,
 
   /** Whether to auto focus the first focusable element in the focus scope on mount. */
   autoFocus?: boolean
@@ -383,7 +384,7 @@ function useAutoFocus(scopeRef: RefObject<HTMLElement[]>, autoFocus: boolean) {
       }
     }
     autoFocusRef.current = false;
-  }, []);
+  }, [scopeRef]);
 }
 
 // An array to create a stack of nodeToRestore elements.
@@ -402,7 +403,7 @@ function removeFromNodeToRestoreArray(node: HTMLElement) {
   }
 }
 
-function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boolean, contain: boolean) {
+function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>, contain: boolean) {
   // useLayoutEffect instead of useEffect so the active element is saved synchronously instead of asynchronously.
   useLayoutEffect(() => {
     if (!restoreFocus) {
@@ -410,7 +411,15 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
     }
 
     let scope = scopeRef.current;
-    let nodeToRestore = document.activeElement as HTMLElement;
+
+    let nodeToRestore: HTMLElement;
+
+    if (typeof restoreFocus === 'boolean') {
+      nodeToRestore = document.activeElement as HTMLElement;
+    } else if (restoreFocus.current) {
+      nodeToRestore = restoreFocus.current instanceof HTMLElement ? restoreFocus.current : restoreFocus.current.UNSAFE_getDOMNode();
+    }
+
     addToNodeToRestoreArray(nodeToRestore);
 
     // Handle the Tab key so that tabbing out of the scope goes to the next element
