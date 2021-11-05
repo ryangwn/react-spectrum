@@ -17,7 +17,7 @@ import Delete from '@spectrum-icons/workflow/Delete';
 import Duplicate from '@spectrum-icons/workflow/Duplicate';
 import Edit from '@spectrum-icons/workflow/Edit';
 import Move from '@spectrum-icons/workflow/Move';
-import React, {useRef, useState} from 'react';
+import React, {useState} from 'react';
 import {Selection} from '@react-types/shared';
 import {Text} from '@react-spectrum/text';
 
@@ -48,11 +48,9 @@ let items = [
 
 export function Example(props: any = {}) {
   const [selectedKeys, setSelectedKeys] = useState<Selection>(props.defaultSelectedKeys || new Set());
-  const tableViewRef = useRef(null);
   return (
     <ActionBarContainer height={props.containerHeight || 300}>
       <TableView
-        ref={tableViewRef}
         aria-label="Table"
         isQuiet={props.isQuiet}
         width={props.tableWidth}
@@ -72,7 +70,6 @@ export function Example(props: any = {}) {
       </TableView>
       <ActionBar
         selectedItemCount={selectedKeys === 'all' ? selectedKeys : selectedKeys.size}
-        restoreFocus={tableViewRef}
         onClearSelection={() => {
           setSelectedKeys(new Set());
         }}

@@ -17,11 +17,11 @@ import {classNames, useDOMRef, useStyleProps} from '@react-spectrum/utils';
 import CrossLarge from '@spectrum-icons/ui/CrossLarge';
 import {DOMRef} from '@react-types/shared';
 import {filterDOMProps} from '@react-aria/utils';
-import {FocusScope} from '@react-aria/focus';
+import {FocusScope, getFocusableTreeWalker} from '@react-aria/focus';
 // @ts-ignore
 import intlMessages from '../intl/*.json';
 import {OpenTransition} from '@react-spectrum/overlays';
-import React, {ReactElement, useEffect, useRef} from 'react';
+import React, {ReactElement, useEffect, useLayoutEffect, useRef} from 'react';
 import {SpectrumActionBarProps} from '@react-types/actionbar';
 import styles from './actionbar.css';
 import {Text} from '@react-spectrum/text';
@@ -31,37 +31,10 @@ import {useProviderProps} from '@react-spectrum/provider';
 
 function ActionBar<T extends object>(props: SpectrumActionBarProps<T>, ref: DOMRef<HTMLDivElement>) {
   let isOpen = props.selectedItemCount !== 0;
-  let lastActiveElementRef = useRef<HTMLElement>(null);
-  let {restoreFocus = true} = props;
 
   return (
     <OpenTransition
       in={isOpen}
-      onEnter={() => lastActiveElementRef.current = document.activeElement as HTMLElement}
-      onExit={() => {
-        // If restoreFocus is true, as by default, try to restore focus to the lastActiveElementRef set onEnter. 
-        if (
-          restoreFocus === true &&
-          document.body.contains(lastActiveElementRef.current) &&
-          typeof lastActiveElementRef.current.focus === 'function') {
-          lastActiveElementRef.current.focus();
-          return;
-        }
-
-        // Otherwise, for a React reference
-        if (typeof restoreFocus !== 'boolean') {
-          let domNode:HTMLElement = restoreFocus.current instanceof HTMLElement ? restoreFocus.current : restoreFocus.current.UNSAFE_getDOMNode();
-
-          if (document.body.contains(domNode)) {
-            if (domNode.contains(lastActiveElementRef.current) &&
-              typeof lastActiveElementRef.current.focus === 'function') {
-              lastActiveElementRef.current.focus();
-            } else if (typeof domNode.focus === 'function') {
-              domNode.focus();
-            }
-          }
-        }        
-      }}
       mountOnEnter
       unmountOnExit>
       <ActionBarInner {...props} ref={ref} />
@@ -82,8 +55,7 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
     onAction,
     onClearSelection,
     selectedItemCount,
-    isOpen,
-    restoreFocus = true
+    isOpen
   } = props;
 
   let {styleProps} = useStyleProps(props);
@@ -110,8 +82,35 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
     announce(formatMessage('actionsAvailable'));
   }, [formatMessage]);
 
+  let restoreFocusRef = useRef<HTMLElement>(null);
+
+  // When selectedItemCount changes, update the restoreFocusRef for match the last document.activeElement
+  useLayoutEffect(() => {
+    if (selectedItemCount !== 0 && lastCount.current) {
+      restoreFocusRef.current = document.activeElement as HTMLElement;
+    }
+  }, [selectedItemCount]);
+
+  useEffect(() => () => {
+    let container = isOpen && domRef.current ? domRef.current.parentElement : null;
+    requestAnimationFrame(() => {
+      if (restoreFocusRef.current && document.body.contains(restoreFocusRef.current)) {
+        // If the restoreFocusRef.current is in the DOM, we can simply focus it.
+        restoreFocusRef.current.focus();
+      } else if (container) {
+        // Otherwise, we assume that the element using a SelectableCollection
+        // is the first child if the ActionBarContainer. 
+        // We use a TreeWalker to find the first tabbable element to focus, 
+        // where on focus the SelectableCollection should set focus to the focusedKey.
+        let walker = getFocusableTreeWalker(container, {tabbable: true});
+        let node = walker.nextNode() as HTMLElement;
+        node && node.focus();
+      }
+    });
+  }, [domRef, isOpen, selectedItemCount]);
+
   return (
-    <FocusScope restoreFocus={restoreFocus}>
+    <FocusScope restoreFocus>
       <div
         {...filterDOMProps(props)}
         {...styleProps}
