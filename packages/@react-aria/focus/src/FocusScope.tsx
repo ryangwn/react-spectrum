@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 
-import {DOMRefValue} from '@react-types/shared';
 import {focusSafely} from './focusSafely';
 import {isElementVisible} from './isElementVisible';
 import React, {ReactNode, RefObject, useContext, useEffect, useRef} from 'react';
@@ -33,7 +32,7 @@ interface FocusScopeProps {
    * Whether to restore focus back to the element that was focused
    * when the focus scope mounted, after the focus scope unmounts.
    */
-  restoreFocus?: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>,
+  restoreFocus?: boolean,
 
   /** Whether to auto focus the first focusable element in the focus scope on mount. */
   autoFocus?: boolean
@@ -387,23 +386,7 @@ function useAutoFocus(scopeRef: RefObject<HTMLElement[]>, autoFocus: boolean) {
   }, [scopeRef]);
 }
 
-// An array to create a stack of nodeToRestore elements.
-let nodeToRestoreArray: HTMLElement[] = [];
-
-function addToNodeToRestoreArray(node: HTMLElement) {
-  if (nodeToRestoreArray.indexOf(node) === -1) {
-    nodeToRestoreArray.push(node);
-  }
-}
-
-function removeFromNodeToRestoreArray(node: HTMLElement) {
-  let index = nodeToRestoreArray.indexOf(node);
-  if (index > -1) {
-    nodeToRestoreArray.splice(index, 1);
-  }
-}
-
-function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>, contain: boolean) {
+function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boolean, contain: boolean) {
   // useLayoutEffect instead of useEffect so the active element is saved synchronously instead of asynchronously.
   useLayoutEffect(() => {
     if (!restoreFocus) {
@@ -411,16 +394,7 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
     }
 
     let scope = scopeRef.current;
-
-    let nodeToRestore: HTMLElement;
-
-    if (typeof restoreFocus === 'boolean') {
-      nodeToRestore = document.activeElement as HTMLElement;
-    } else {
-      nodeToRestore = restoreFocus.current instanceof HTMLElement ? restoreFocus.current : restoreFocus.current.UNSAFE_getDOMNode();
-    }
-
-    addToNodeToRestoreArray(nodeToRestore);
+    let nodeToRestore = document.activeElement as HTMLElement;
 
     // Handle the Tab key so that tabbing out of the scope goes to the next element
     // after the node that had focus when the scope mounted. This is important when
@@ -444,7 +418,6 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
       let nextElement = (e.shiftKey ? walker.previousNode() : walker.nextNode()) as HTMLElement;
 
       if (!document.body.contains(nodeToRestore) || nodeToRestore === document.body) {
-        removeFromNodeToRestoreArray(nodeToRestore);
         nodeToRestore = null;
       }
 
@@ -484,29 +457,12 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
         document.removeEventListener('keydown', onKeyDown, true);
       }
 
-      if (nodeToRestore) {
-        let index = nodeToRestoreArray.indexOf(nodeToRestore);
-
-        if (restoreFocus && isElementInScope(document.activeElement, scope)) {
-          requestAnimationFrame(() => {
-            if (document.body.contains(nodeToRestore) && nodeToRestore !== document.body) {
-              focusElement(nodeToRestore);
-            } else {
-              while (index > 0) {
-                index--;
-                let node = nodeToRestoreArray[index];
-                if (!document.body.contains(node) || node === document.body) {
-                  removeFromNodeToRestoreArray(node);
-                } else {
-                  focusElement(node);
-                  break;
-                }
-              }
-            }
-          });
-        } else if (!document.body.contains(nodeToRestore)) {
-          removeFromNodeToRestoreArray(nodeToRestore);
-        }
+      if (restoreFocus && nodeToRestore && isElementInScope(document.activeElement, scope)) {
+        requestAnimationFrame(() => {
+          if (document.body.contains(nodeToRestore)) {
+            focusElement(nodeToRestore);
+          }
+        });
       }
     };
   }, [scopeRef, restoreFocus, contain]);

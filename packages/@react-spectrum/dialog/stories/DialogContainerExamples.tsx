@@ -60,39 +60,3 @@ function ExampleDialog(props) {
     </Dialog>
   );
 }
-
-export function NestedDialogContainerExample() {
-  let [dialog, setDialog] = React.useState(null);
-
-  return (
-    <>
-      <MenuTrigger>
-        <ActionButton aria-label="Actions">Open menu</ActionButton>
-        <Menu onAction={setDialog}>
-          <Item key="doThis">Do this...</Item>
-          <Item key="doThat">Do that...</Item>
-        </Menu>
-      </MenuTrigger>
-      <DialogContainer onDismiss={() => setDialog(null)}>
-        {dialog === 'doThis' &&
-          <Dialog isDismissable onDismiss={() => setDialog(null)}>
-            <Heading>This</Heading>
-            <Divider />
-            <Content>
-              <ActionButton onPress={() => setDialog('doThat')} autoFocus>Do that</ActionButton>
-            </Content>
-          </Dialog>
-        }
-        {dialog === 'doThat' &&
-          <Dialog isDismissable onDismiss={() => setDialog(null)}>
-            <Heading>That</Heading>
-            <Divider />
-            <Content>
-              <ActionButton onPress={() => setDialog('doThis')} autoFocus>Do this</ActionButton>
-            </Content>
-          </Dialog>
-        }
-      </DialogContainer>
-    </>
-  );
-}
