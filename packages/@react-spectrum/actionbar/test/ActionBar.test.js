@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
+
 jest.mock('@react-aria/live-announcer');
 import {act, fireEvent, render, within} from '@testing-library/react';
 import {announce} from '@react-aria/live-announcer';
@@ -18,6 +19,7 @@ import {Provider} from '@react-spectrum/provider';
 import React from 'react';
 import {theme} from '@react-spectrum/theme-default';
 import {triggerPress} from '@react-spectrum/test-utils';
+import userEvent from '@testing-library/user-event';
 
 describe('ActionBar', () => {
   beforeAll(() => {
@@ -133,5 +135,38 @@ describe('ActionBar', () => {
     triggerPress(within(toolbar).getAllByRole('button')[0]);
 
     expect(onAction).toHaveBeenCalledWith('edit');
+  });
+
+  it('should restore focus back to the table', () => {
+    jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function () {
+      if (this instanceof HTMLButtonElement) {
+        return 100;
+      }
+
+      return 250;
+    });
+    let onAction = jest.fn();
+    let tree = render(<Provider theme={theme}><Example onAction={onAction} /></Provider>);
+
+    let table = tree.getByRole('grid');
+    let rows = within(table).getAllByRole('row');
+
+    triggerPress(rows[1]);
+
+    let moreButton = tree.getByLabelText('…');
+    triggerPress(moreButton);
+    let menu = tree.getByRole('menu');
+
+    expect(document.activeElement).toBe(menu);
+
+    fireEvent.keyDown(document.activeElement, {key: 'Escape'});
+    fireEvent.keyUp(document.activeElement, {key: 'Escape'});
+
+    expect(document.activeElement).toBe(moreButton);
+
+    fireEvent.keyDown(document.activeElement, {key: 'Escape'});
+    fireEvent.keyUp(document.activeElement, {key: 'Escape'});
+
+    expect(document.activeElement).toBe(rows[1]);
   });
 });
