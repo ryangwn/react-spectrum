@@ -383,7 +383,7 @@ function useAutoFocus(scopeRef: RefObject<HTMLElement[]>, autoFocus: boolean) {
       }
     }
     autoFocusRef.current = false;
-  }, [scopeRef]);
+  }, []);
 }
 
 function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boolean, contain: boolean) {
