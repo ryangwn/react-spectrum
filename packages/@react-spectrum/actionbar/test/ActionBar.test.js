@@ -208,15 +208,18 @@ describe('ActionBar', () => {
 
     expect(document.activeElement).toBe(moreButton);
 
-    fireEvent.keyDown(document.activeElement, {key: 'Escape'});
-    fireEvent.keyUp(document.activeElement, {key: 'Escape'});
-
-    act(() => jest.runAllTimers());
+    act(() => {
+      fireEvent.keyDown(document.activeElement, {key: 'Escape'});
+      fireEvent.keyUp(document.activeElement, {key: 'Escape'});
+      jest.runAllTimers();
+    });
 
     expect(document.activeElement).toBe(table);
-    fireEvent.focus(table);
 
-    act(() => jest.runAllTimers());
+    act(() => {
+      fireEvent.focus(table);
+      jest.runAllTimers();
+    });
 
     expect(document.activeElement).toBe(within(table).getAllByRole('row')[2]);
   });
