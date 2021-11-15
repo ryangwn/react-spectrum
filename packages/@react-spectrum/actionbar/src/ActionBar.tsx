@@ -17,7 +17,7 @@ import {classNames, useDOMRef, useStyleProps} from '@react-spectrum/utils';
 import CrossLarge from '@spectrum-icons/ui/CrossLarge';
 import {DOMRef} from '@react-types/shared';
 import {filterDOMProps} from '@react-aria/utils';
-import {FocusScope} from '@react-aria/focus';
+import {FocusScope, getFocusableTreeWalker} from '@react-aria/focus';
 // @ts-ignore
 import intlMessages from '../intl/*.json';
 import {OpenTransition} from '@react-spectrum/overlays';
@@ -111,19 +111,26 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
 
     // When the ActionBar closes.
     return () => {
-
-      // Clean up focus event listener on ActionBarContainer.
-      if (containerRef.current) {
-        containerRef.current.removeEventListener('focus', onFocusContainer, true);
-        containerRef.current = null;
-      }
-
-      // Wait a frame and restore focus to restoreFocusRef.current 
-      // if the element still exists in the DOM. 
+      // Wait a frame.
       requestAnimationFrame(() => {
         if (restoreFocusRef.current && document.body.contains(restoreFocusRef.current)) {
+          // If the restoreFocusRef.current is in the DOM, we can simply focus it.
           restoreFocusRef.current.focus();
           restoreFocusRef.current = null;
+        } else if (containerRef.current) {
+          // Otherwise, we assume that the element using a SelectableCollection
+          // is the first child if the ActionBarContainer. 
+          // We use a TreeWalker to find the first tabbable element to focus, 
+          // where on focus the SelectableCollection should set focus to the focusedKey.
+          let walker = getFocusableTreeWalker(containerRef.current, {tabbable: true});
+          let node = walker.nextNode() as HTMLElement;
+          node && node.focus();
+        }
+
+        // Clean up focus event listener on ActionBarContainer.
+        if (containerRef.current) {
+          containerRef.current.removeEventListener('focus', onFocusContainer, true);
+          containerRef.current = null;
         }
       });
     };
