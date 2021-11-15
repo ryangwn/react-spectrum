@@ -166,6 +166,8 @@ describe('ActionBar', () => {
     fireEvent.keyDown(document.activeElement, {key: 'Escape'});
     fireEvent.keyUp(document.activeElement, {key: 'Escape'});
 
+    act(() => jest.runAllTimers());
+
     expect(document.activeElement).toBe(rows[1]);
   });
 });
