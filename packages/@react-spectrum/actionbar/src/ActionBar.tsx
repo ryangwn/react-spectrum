@@ -83,6 +83,7 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
   }, [formatMessage]);
 
   let restoreFocusRef = useRef<HTMLElement>(null);
+  let containerRef = useRef<HTMLElement>(null);
 
   // When selectedItemCount changes, update the restoreFocusRef for match the last document.activeElement
   useLayoutEffect(() => {
@@ -91,23 +92,31 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
     }
   }, [selectedItemCount]);
 
-  useEffect(() => () => {
-    let container = isOpen && domRef.current ? domRef.current.parentElement : null;
-    requestAnimationFrame(() => {
+  useEffect(() => {
+    // Handler to keep track of focus changes within ActionBarContainer when ActionBar is open.
+    let onFocusContainer = (e:FocusEvent) => {
+      let activeElement = e.target as HTMLElement;
+      if (domRef.current && !domRef.current.contains(activeElement)) {
+        restoreFocusRef.current = activeElement;
+      }
+    };
+    if (domRef.current) {
+      containerRef.current = domRef.current.parentElement;
+      containerRef.current.addEventListener('focus', onFocusContainer, true);
+    } else if (containerRef.current) {
+      containerRef.current.removeEventListener('focus', onFocusContainer, true);
+      containerRef.current = null;
+    }
+    return () => requestAnimationFrame(() => {
       if (restoreFocusRef.current && document.body.contains(restoreFocusRef.current)) {
-        // If the restoreFocusRef.current is in the DOM, we can simply focus it.
         restoreFocusRef.current.focus();
-      } else if (container) {
-        // Otherwise, we assume that the element using a SelectableCollection
-        // is the first child if the ActionBarContainer. 
-        // We use a TreeWalker to find the first tabbable element to focus, 
-        // where on focus the SelectableCollection should set focus to the focusedKey.
-        let walker = getFocusableTreeWalker(container, {tabbable: true});
-        let node = walker.nextNode() as HTMLElement;
-        node && node.focus();
+      }
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('focus', onFocusContainer, true);
+        containerRef.current = null;
       }
     });
-  }, [domRef, isOpen, selectedItemCount]);
+  }, [domRef]);
 
   return (
     <FocusScope restoreFocus>
