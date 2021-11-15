@@ -170,4 +170,52 @@ describe('ActionBar', () => {
 
     expect(document.activeElement).toBe(rows[1]);
   });
+
+  it('should restore focus back to the table when focused element index is scrolled out of view', () => {
+    jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function () {
+      if (this instanceof HTMLButtonElement) {
+        return 100;
+      }
+
+      return 250;
+    });
+    let onAction = jest.fn();
+    let tree = render(<Provider theme={theme}><Example onAction={onAction} /></Provider>);
+
+    let table = tree.getByRole('grid');
+    let body = table.childNodes[1];
+    let rows = within(table).getAllByRole('row');
+
+    triggerPress(rows[1]);
+
+    act(() => rows[2].focus());
+
+    expect(body.scrollTop).toBe(0);
+
+    body.scrollTop = 392;
+    fireEvent.scroll(body);
+    expect(body.scrollTop).toBe(392);
+    expect(document.activeElement).toBe(table);
+
+    let moreButton = tree.getByLabelText('…');
+    triggerPress(moreButton);
+    let menu = tree.getByRole('menu');
+
+    expect(document.activeElement).toBe(menu);
+
+    fireEvent.keyDown(document.activeElement, {key: 'Escape'});
+    fireEvent.keyUp(document.activeElement, {key: 'Escape'});
+
+    expect(document.activeElement).toBe(moreButton);
+
+    fireEvent.keyDown(document.activeElement, {key: 'Escape'});
+    fireEvent.keyUp(document.activeElement, {key: 'Escape'});
+
+    act(() => jest.runAllTimers());
+
+    expect(document.activeElement).toBe(table);
+    fireEvent.focus(table);
+
+    expect(document.activeElement).toBe(within(table).getAllByRole('row')[2]);
+  });
 });
