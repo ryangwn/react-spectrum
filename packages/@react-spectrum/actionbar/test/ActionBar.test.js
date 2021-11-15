@@ -216,6 +216,8 @@ describe('ActionBar', () => {
     expect(document.activeElement).toBe(table);
     fireEvent.focus(table);
 
+    act(() => jest.runAllTimers());
+
     expect(document.activeElement).toBe(within(table).getAllByRole('row')[2]);
   });
 });
