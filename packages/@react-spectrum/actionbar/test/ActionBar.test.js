@@ -21,11 +21,18 @@ import {theme} from '@react-spectrum/theme-default';
 import {triggerPress} from '@react-spectrum/test-utils';
 
 describe('ActionBar', () => {
+  let offsetWidth, offsetHeight;
+
   beforeAll(() => {
-    jest.spyOn(window.HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => 1000);
-    jest.spyOn(window.HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => 500);
+    offsetWidth = jest.spyOn(window.HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => 1000);
+    offsetHeight = jest.spyOn(window.HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(() => 500);
     jest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb());
     jest.useFakeTimers();
+  });
+
+  afterAll(function () {
+    offsetWidth.mockReset();
+    offsetHeight.mockReset();
   });
 
   afterEach(() => {
@@ -194,17 +201,24 @@ describe('ActionBar', () => {
 
     body.scrollTop = 392;
     fireEvent.scroll(body);
+    act(() => jest.runAllTimers());
+
     expect(body.scrollTop).toBe(392);
     expect(document.activeElement).toBe(table);
 
     let moreButton = tree.getByLabelText('…');
     triggerPress(moreButton);
+
+    act(() => jest.runAllTimers());
+
     let menu = tree.getByRole('menu');
 
     expect(document.activeElement).toBe(menu);
 
     fireEvent.keyDown(document.activeElement, {key: 'Escape'});
     fireEvent.keyUp(document.activeElement, {key: 'Escape'});
+
+    act(() => jest.runAllTimers());
 
     expect(document.activeElement).toBe(moreButton);
 
