@@ -178,7 +178,7 @@ describe('ActionBar', () => {
     expect(document.activeElement).toBe(rows[1]);
   });
 
-  it('should restore focus back to the table when focused element index is scrolled out of view', () => {
+  it.skip('should restore focus back to the table when focused element index is scrolled out of view', () => {
     jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function () {
       if (this instanceof HTMLButtonElement) {
         return 100;
