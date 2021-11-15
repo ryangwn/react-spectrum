@@ -17,11 +17,11 @@ import {classNames, useDOMRef, useStyleProps} from '@react-spectrum/utils';
 import CrossLarge from '@spectrum-icons/ui/CrossLarge';
 import {DOMRef} from '@react-types/shared';
 import {filterDOMProps} from '@react-aria/utils';
-import {FocusScope, getFocusableTreeWalker} from '@react-aria/focus';
+import {FocusScope} from '@react-aria/focus';
 // @ts-ignore
 import intlMessages from '../intl/*.json';
 import {OpenTransition} from '@react-spectrum/overlays';
-import React, {ReactElement, useEffect, useLayoutEffect, useRef} from 'react';
+import React, {ReactElement, useEffect, useRef} from 'react';
 import {SpectrumActionBarProps} from '@react-types/actionbar';
 import styles from './actionbar.css';
 import {Text} from '@react-spectrum/text';
@@ -85,37 +85,48 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
   let restoreFocusRef = useRef<HTMLElement>(null);
   let containerRef = useRef<HTMLElement>(null);
 
-  // When selectedItemCount changes, update the restoreFocusRef for match the last document.activeElement
-  useLayoutEffect(() => {
-    if (selectedItemCount !== 0 && lastCount.current) {
-      restoreFocusRef.current = document.activeElement as HTMLElement;
-    }
-  }, [selectedItemCount]);
-
   useEffect(() => {
-    // Handler to keep track of focus changes within ActionBarContainer when ActionBar is open.
+    // Event handler to keep track of focus changes within ActionBarContainer when ActionBar is open.
     let onFocusContainer = (e:FocusEvent) => {
       let activeElement = e.target as HTMLElement;
       if (domRef.current && !domRef.current.contains(activeElement)) {
         restoreFocusRef.current = activeElement;
       }
     };
+
     if (domRef.current) {
-      containerRef.current = domRef.current.parentElement;
-      containerRef.current.addEventListener('focus', onFocusContainer, true);
-    } else if (containerRef.current) {
-      containerRef.current.removeEventListener('focus', onFocusContainer, true);
-      containerRef.current = null;
-    }
-    return () => requestAnimationFrame(() => {
-      if (restoreFocusRef.current && document.body.contains(restoreFocusRef.current)) {
-        restoreFocusRef.current.focus();
+      // Store the last element to have focus when the ActionBar opens.
+      if (!restoreFocusRef.current) {
+        restoreFocusRef.current = document.activeElement as HTMLElement;
       }
+
+      // Store reference to the ActionBarContainer element.
+      containerRef.current = domRef.current.parentElement;
+
+      // Listen for focus events within the ActionBarContainer, 
+      // and if necessary update the element to which focus
+      // should be restored when the ActionBar closes.
+      containerRef.current.addEventListener('focus', onFocusContainer, true);
+    }
+
+    // When the ActionBar closes.
+    return () => {
+
+      // Clean up focus event listener on ActionBarContainer.
       if (containerRef.current) {
         containerRef.current.removeEventListener('focus', onFocusContainer, true);
         containerRef.current = null;
       }
-    });
+
+      // Wait a frame and restore focus to restoreFocusRef.current 
+      // if the element still exists in the DOM. 
+      requestAnimationFrame(() => {
+        if (restoreFocusRef.current && document.body.contains(restoreFocusRef.current)) {
+          restoreFocusRef.current.focus();
+          restoreFocusRef.current = null;
+        }
+      });
+    };
   }, [domRef]);
 
   return (
