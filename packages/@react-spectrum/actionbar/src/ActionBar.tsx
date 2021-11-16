@@ -87,11 +87,18 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
 
   useEffect(() => {
     // Event handler to keep track of focus changes within ActionBarContainer when ActionBar is open.
+    let timeoutId = null;
     let onFocusContainer = (e:FocusEvent) => {
       let activeElement = e.target as HTMLElement;
-      if (domRef.current && !domRef.current.contains(activeElement)) {
-        restoreFocusRef.current = activeElement;
+      if (timeoutId) {
+        cancelAnimationFrame(timeoutId);
+        timeoutId = null;
       }
+      timeoutId = requestAnimationFrame(() => {
+        if (domRef.current && !domRef.current.contains(activeElement)) {
+          restoreFocusRef.current = activeElement;
+        }
+      });
     };
 
     if (domRef.current) {

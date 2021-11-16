@@ -178,7 +178,7 @@ describe('ActionBar', () => {
     expect(document.activeElement).toBe(rows[1]);
   });
 
-  it.skip('should restore focus back to the table when focused element index is scrolled out of view', () => {
+  it('should restore focus back to the table when focused element index is scrolled out of view', () => {
     jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function () {
       if (this instanceof HTMLButtonElement) {
         return 100;
@@ -192,6 +192,9 @@ describe('ActionBar', () => {
     let table = tree.getByRole('grid');
     let body = table.childNodes[1];
     let rows = within(table).getAllByRole('row');
+
+    // Need requestAnimationFrame to actually be async for tests to work.
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => setTimeout(cb, 0));
 
     triggerPress(rows[1]);
 
@@ -224,11 +227,6 @@ describe('ActionBar', () => {
 
     fireEvent.keyDown(document.activeElement, {key: 'Escape'});
     fireEvent.keyUp(document.activeElement, {key: 'Escape'});
-
-    act(() => jest.runAllTimers());
-
-    expect(document.activeElement).toBe(table);
-    fireEvent.focus(table);
 
     act(() => jest.runAllTimers());
 
