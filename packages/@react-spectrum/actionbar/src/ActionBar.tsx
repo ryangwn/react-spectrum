@@ -122,8 +122,10 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
       requestAnimationFrame(() => {
         if (restoreFocusRef.current && document.body.contains(restoreFocusRef.current)) {
           // If the restoreFocusRef.current is in the DOM, we can simply focus it.
-          restoreFocusRef.current.focus();
-          restoreFocusRef.current = null;
+          requestAnimationFrame(() => {
+            restoreFocusRef.current.focus();
+            restoreFocusRef.current = null;
+          });
         } else if (containerRef.current) {
           // Otherwise, we assume that the element using a SelectableCollection
           // is the first child if the ActionBarContainer. 
