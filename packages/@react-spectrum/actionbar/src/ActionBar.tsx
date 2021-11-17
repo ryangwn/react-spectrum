@@ -133,7 +133,7 @@ const ActionBarInner = React.forwardRef((props: ActionBarInnerProps, ref: DOMRef
           // where on focus the SelectableCollection should set focus to the focusedKey.
           let walker = getFocusableTreeWalker(containerRef.current, {tabbable: true});
           let node = walker.nextNode() as HTMLElement;
-          node && node.focus();
+          requestAnimationFrame(() => node && node.focus());
         }
 
         // Clean up focus event listener on ActionBarContainer.
