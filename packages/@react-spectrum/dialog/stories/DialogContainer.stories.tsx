@@ -43,4 +43,8 @@ storiesOf('DialogContainer', module)
   .add(
     'Nested Dialog Containers',
     () => <NestedDialogContainerExample />
+  )
+  .add(
+    'Nested Dialog Containers with restoreFocus as a ref',
+    () => <NestedDialogContainerExample useRestoreFocusRef />
   );

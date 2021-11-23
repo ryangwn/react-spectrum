@@ -10,15 +10,17 @@
  * governing permissions and limitations under the License.
  */
 
+import {DOMRefValue} from '@react-types/shared';
 import {FocusScope} from '../';
 import {Meta, Story} from '@storybook/react';
-import React, {ReactNode, useState} from 'react';
+import React, {ReactNode, RefObject, useRef, useState} from 'react';
 import ReactDOM from 'react-dom';
 
 const dialogsRoot = 'dialogsRoot';
 
 interface StoryProps {
-  usePortal: boolean
+  usePortal: boolean,
+  useRestoreFocusRef: boolean
 }
 
 const meta: Meta<StoryProps> = {
@@ -28,7 +30,7 @@ const meta: Meta<StoryProps> = {
 
 export default meta;
 
-const Template = (): Story<StoryProps> => ({usePortal}) => <Example usePortal={usePortal} />;
+const Template = (): Story<StoryProps> => ({usePortal, useRestoreFocusRef}) => <Example usePortal={usePortal} useRestoreFocusRef={useRestoreFocusRef} />;
 
 function MaybePortal({children, usePortal}: { children: ReactNode, usePortal: boolean}) {
   if (!usePortal) {
@@ -41,12 +43,12 @@ function MaybePortal({children, usePortal}: { children: ReactNode, usePortal: bo
   );
 }
 
-function NestedDialog({onClose, usePortal}: {onClose: VoidFunction, usePortal: boolean}) {
+function NestedDialog({onClose, usePortal, restoreFocus = true}: {onClose: VoidFunction, usePortal: boolean, restoreFocus?: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>}) {
   let [open, setOpen] = useState(false);
 
   return (
     <MaybePortal usePortal={usePortal}>
-      <FocusScope contain restoreFocus autoFocus>
+      <FocusScope contain restoreFocus={restoreFocus} autoFocus>
         <div>
           <input />
 
@@ -69,8 +71,9 @@ function NestedDialog({onClose, usePortal}: {onClose: VoidFunction, usePortal: b
   );
 }
 
-function Example({usePortal}: StoryProps) {
+function Example({usePortal, useRestoreFocusRef = false}: StoryProps) {
   let [open, setOpen] = useState(false);
+  let restoreFocusRef = useRef(null);
 
   return (
     <div>
@@ -80,7 +83,9 @@ function Example({usePortal}: StoryProps) {
         Open dialog
       </button>
 
-      {open && <NestedDialog onClose={() => setOpen(false)} usePortal={usePortal} />}
+      {useRestoreFocusRef && <input ref={restoreFocusRef} placeholder="Restore focus here!" />}
+
+      {open && <NestedDialog onClose={() => setOpen(false)} usePortal={usePortal} restoreFocus={useRestoreFocusRef ? restoreFocusRef : true} />}
 
       <div id={dialogsRoot} />
     </div>
@@ -92,3 +97,9 @@ KeyboardNavigation.args = {usePortal: false};
 
 export const KeyboardNavigationInsidePortal = Template().bind({});
 KeyboardNavigationInsidePortal.args = {usePortal: true};
+
+export const RestoreFocusRef = Template().bind({});
+RestoreFocusRef.args = {usePortal: false, useRestoreFocusRef: true};
+
+export const RestoreFocusRefInsidePortal = Template().bind({});
+RestoreFocusRefInsidePortal.args = {usePortal: true, useRestoreFocusRef: true};
