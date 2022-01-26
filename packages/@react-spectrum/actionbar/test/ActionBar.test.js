@@ -159,6 +159,7 @@ describe('ActionBar', () => {
     });
     let onAction = jest.fn();
     let tree = render(<Provider theme={theme}><Example onAction={onAction} /></Provider>);
+    act(() => jest.runAllTimers());
 
     let table = tree.getByRole('grid');
     let rows = within(table).getAllByRole('row');
@@ -167,12 +168,17 @@ describe('ActionBar', () => {
 
     let moreButton = tree.getByLabelText('…');
     triggerPress(moreButton);
+
+    act(() => jest.runAllTimers());
+
     let menu = tree.getByRole('menu');
 
     expect(document.activeElement).toBe(menu);
 
     fireEvent.keyDown(document.activeElement, {key: 'Escape'});
     fireEvent.keyUp(document.activeElement, {key: 'Escape'});
+
+    act(() => jest.runAllTimers());
 
     expect(document.activeElement).toBe(moreButton);
 
@@ -192,15 +198,17 @@ describe('ActionBar', () => {
 
       return 250;
     });
+
+    // Need requestAnimationFrame to actually be async for tests to work.
+    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => setTimeout(cb, 0));
+
     let onAction = jest.fn();
     let tree = render(<Provider theme={theme}><Example onAction={onAction} /></Provider>);
+    act(() => jest.runAllTimers());
 
     let table = tree.getByRole('grid');
     let body = table.childNodes[1];
     let rows = within(table).getAllByRole('row');
-
-    // Need requestAnimationFrame to actually be async for tests to work.
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => setTimeout(cb, 0));
 
     triggerPress(rows[1]);
 
