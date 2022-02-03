@@ -20,6 +20,7 @@ const dialogsRoot = 'dialogsRoot';
 
 interface StoryProps {
   usePortal: boolean,
+  contain: boolean,
   useRestoreFocusRef: boolean
 }
 
@@ -35,7 +36,7 @@ const meta: Meta<StoryProps> = {
 
 export default meta;
 
-const Template = (): Story<StoryProps> => ({usePortal, useRestoreFocusRef}) => <Example usePortal={usePortal} useRestoreFocusRef={useRestoreFocusRef} />;
+const Template = (): Story<StoryProps> => ({usePortal, contain = true, useRestoreFocusRef}) => <Example usePortal={usePortal} contain={contain} useRestoreFocusRef={useRestoreFocusRef} />;
 
 function MaybePortal({children, usePortal}: { children: ReactNode, usePortal: boolean}) {
   if (!usePortal) {
@@ -48,35 +49,49 @@ function MaybePortal({children, usePortal}: { children: ReactNode, usePortal: bo
   );
 }
 
-function NestedDialog({onClose, usePortal, restoreFocus = true}: {onClose: VoidFunction, usePortal: boolean, restoreFocus?: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>}) {
+function NestedDialog({onClose, usePortal, contain, restoreFocus = true}: {onClose: VoidFunction, usePortal: boolean, contain: boolean, restoreFocus?: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>}) {
   let [open, setOpen] = useState(false);
+  let [showNew, setShowNew] = useState(false);
+  let onKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      onClose();
+    }
+  };
 
   return (
     <MaybePortal usePortal={usePortal}>
-      <FocusScope contain restoreFocus={restoreFocus} autoFocus>
-        <div>
-          <input />
-
-          <input />
-
-          <input />
-
-          <button type="button" onClick={() => setOpen(true)}>
-            Open dialog
-          </button>
-
-          <button type="button" onClick={onClose}>
-            close
-          </button>
-
-          {open && <NestedDialog onClose={() => setOpen(false)} usePortal={usePortal} />}
-        </div>
+      <FocusScope contain={contain} restoreFocus={restoreFocus} autoFocus>
+        {!showNew && (
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+          <div role="dialog" onKeyDown={onKeyDown}>
+            <input />
+            <input />
+            <input />
+            <button onClick={() => setShowNew(true)}>replace focusscope children</button>
+            <button type="button" onClick={() => setOpen(true)}>
+              Open dialog
+            </button>
+            <button type="button" onClick={onClose}>
+              close
+            </button>
+            {open && <NestedDialog contain={contain} restoreFocus={restoreFocus} onClose={() => setOpen(false)} usePortal={usePortal} />}
+          </div>
+        )}
+        {showNew && (
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+          <div role="dialog" onKeyDown={onKeyDown}>
+            <input />
+            <input autoFocus />
+            <input />
+          </div>
+        )}
       </FocusScope>
     </MaybePortal>
   );
 }
 
-function Example({usePortal, useRestoreFocusRef = false}: StoryProps) {
+function Example({usePortal, contain, useRestoreFocusRef = false}: StoryProps) {
   let [open, setOpen] = useState(false);
   let restoreFocusRef = useRef(null);
 
@@ -88,9 +103,9 @@ function Example({usePortal, useRestoreFocusRef = false}: StoryProps) {
         Open dialog
       </button>
 
-      {useRestoreFocusRef && <input ref={restoreFocusRef} placeholder="Restore focus here!" />}
+      {useRestoreFocusRef ? <input ref={restoreFocusRef} placeholder="Restore focus here!" /> : <input />}
 
-      {open && <NestedDialog onClose={() => setOpen(false)} usePortal={usePortal} restoreFocus={useRestoreFocusRef ? restoreFocusRef : true} />}
+      {open && <NestedDialog onClose={() => setOpen(false)} usePortal={usePortal} contain={contain} restoreFocus={useRestoreFocusRef ? restoreFocusRef : true} />}
 
       <div id={dialogsRoot} />
     </div>
@@ -102,6 +117,12 @@ KeyboardNavigation.args = {usePortal: false};
 
 export const KeyboardNavigationInsidePortal = Template().bind({});
 KeyboardNavigationInsidePortal.args = {usePortal: true};
+
+export const KeyboardNavigationNoContain = Template().bind({});
+KeyboardNavigationNoContain.args = {usePortal: false, contain: false};
+
+export const KeyboardNavigationInsidePortalNoContain = Template().bind({});
+KeyboardNavigationInsidePortalNoContain.args = {usePortal: true, contain: false};
 
 export const RestoreFocusRef = Template().bind({});
 RestoreFocusRef.args = {usePortal: false, useRestoreFocusRef: true};

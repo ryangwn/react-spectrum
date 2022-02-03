@@ -405,18 +405,19 @@ function removeFromNodeToRestoreArray(node: HTMLElement) {
 }
 
 function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boolean | RefObject<DOMRefValue<HTMLElement>> | RefObject<HTMLElement>, contain: boolean) {
+  // create a ref during render instead of useLayoutEffect so the active element is saved before a child with autoFocus=true mounts.
+  const nodeToRestoreRef = useRef(typeof document !== 'undefined' ? document.activeElement as HTMLElement : null);
+
   // useLayoutEffect instead of useEffect so the active element is saved synchronously instead of asynchronously.
   useLayoutEffect(() => {
     if (!restoreFocus) {
       return;
     }
 
-    let scope = scopeRef.current;
-
     let nodeToRestore: HTMLElement;
 
     if (typeof restoreFocus === 'boolean') {
-      nodeToRestore = document.activeElement as HTMLElement;
+      nodeToRestore = nodeToRestoreRef.current as HTMLElement;
     } else if (restoreFocus.current) {
       nodeToRestore = restoreFocus.current instanceof HTMLElement ? restoreFocus.current : restoreFocus.current.UNSAFE_getDOMNode();
     }
@@ -433,7 +434,7 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
       }
 
       let focusedElement = document.activeElement as HTMLElement;
-      if (!isElementInScope(focusedElement, scope)) {
+      if (!isElementInScope(focusedElement, scopeRef.current)) {
         return;
       }
 
@@ -451,13 +452,13 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
 
       // If there is no next element, or it is outside the current scope, move focus to the
       // next element after the node to restore to instead.
-      if ((!nextElement || !isElementInScope(nextElement, scope)) && nodeToRestore) {
+      if ((!nextElement || !isElementInScope(nextElement, scopeRef.current)) && nodeToRestore) {
         walker.currentNode = nodeToRestore;
 
         // Skip over elements within the scope, in case the scope immediately follows the node to restore.
         do {
           nextElement = (e.shiftKey ? walker.previousNode() : walker.nextNode()) as HTMLElement;
-        } while (isElementInScope(nextElement, scope));
+        } while (isElementInScope(nextElement, scopeRef.current));
 
         e.preventDefault();
         e.stopPropagation();
@@ -488,7 +489,7 @@ function useRestoreFocus(scopeRef: RefObject<HTMLElement[]>, restoreFocus: boole
       if (nodeToRestore) {
         let index = nodeToRestoreArray.indexOf(nodeToRestore);
 
-        if (restoreFocus && isElementInScope(document.activeElement, scope)) {
+        if (restoreFocus && isElementInScope(document.activeElement, scopeRef.current)) {
           requestAnimationFrame(() => {
             if (document.body.contains(nodeToRestore) && nodeToRestore !== document.body) {
               focusElement(nodeToRestore);
